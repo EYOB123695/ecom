@@ -21,6 +21,13 @@ func NewHandler(service Service) *handler {
 
 }
 
+// ListProducts godoc
+// @Summary      List all products
+// @Tags         products
+// @Produce      json
+// @Success      200 {array} ProductResponse
+// @Failure      500 {string} string
+// @Router       /products [get]
 func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	products, err := h.service.ListProducts(r.Context())
 	if err != nil {
@@ -33,6 +40,16 @@ func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusOK, products)
 
 }
+// GetProductByID godoc
+// @Summary      Get product by ID
+// @Tags         products
+// @Produce      json
+// @Param        id path int true "Product ID"
+// @Success      200 {object} ProductResponse
+// @Failure      400 {string} string
+// @Failure      404 {string} string
+// @Failure      500 {string} string
+// @Router       /products/{id} [get]
 func (h *handler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 

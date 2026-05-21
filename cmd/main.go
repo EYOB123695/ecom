@@ -1,15 +1,21 @@
+// @title           Ecom API
+// @version         1.0
+// @description     Ecommerce backend API
+// @host            localhost:8080
+// @BasePath        /
+// @securityDefinitions.apikey BearerAuth
+// @in              header
+// @name            Authorization
 package main
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"os"
 
 	"github.com/EYOB123695/ecom/internal/env"
 	"github.com/jackc/pgx/v5"
 )
-
 
 func main() {
 	ctx := context.Background()
@@ -19,6 +25,7 @@ func main() {
 		db: dbConfig{
 			dsn: env.GetString("DB_DSN", "host=localhost port=5433 user=postgres password=postgres dbname=ecom sslmode=disable"),
 		},
+		jwtSecret: env.GetString("JWT_SECRET", "dev-secret-change-in-production"),
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
@@ -33,14 +40,12 @@ func main() {
 	api := application{
 		config: cfg,
 		db:     conn,
+		logger: logger,
 	}
 	logger.Info("database connected successfully")
 
-	
-
-
 	if err := api.run(api.mount()); err != nil {
-		log.Println("Server has failed to start")
+		logger.Error("Server has failed to start", "error", err)
 		os.Exit(1)
-	} 
+	}
 }
