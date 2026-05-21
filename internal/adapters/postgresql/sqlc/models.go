@@ -8,6 +8,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CartItem struct {
+	ID        int32 `json:"id"`
+	UserID    int64 `json:"user_id"`
+	ProductID int64 `json:"product_id"`
+	Quantity  int32 `json:"quantity"`
+}
+
+type Order struct {
+	ID        int32              `json:"id"`
+	UserID    int64              `json:"user_id"`
+	Total     pgtype.Numeric     `json:"total"`
+	Status    string             `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type OrderItem struct {
+	ID        int32          `json:"id"`
+	OrderID   int32          `json:"order_id"`
+	ProductID int64          `json:"product_id"`
+	Quantity  int32          `json:"quantity"`
+	Price     pgtype.Numeric `json:"price"`
+}
+
 type Product struct {
 	ID           int64            `json:"id"`
 	Name         string           `json:"name"`

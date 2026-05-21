@@ -9,11 +9,25 @@ import (
 )
 
 type Querier interface {
+	AddCartItem(ctx context.Context, arg AddCartItemParams) (CartItem, error)
+	ClearCart(ctx context.Context, userID int64) error
+	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
+	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
+	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteCartItem(ctx context.Context, arg DeleteCartItemParams) error
+	DeleteProduct(ctx context.Context, id int64) error
+	GetCartItemsByUserID(ctx context.Context, userID int64) ([]GetCartItemsByUserIDRow, error)
+	GetOrderByID(ctx context.Context, arg GetOrderByIDParams) (Order, error)
+	GetOrderItemsByOrderID(ctx context.Context, orderID int32) ([]GetOrderItemsByOrderIDRow, error)
 	GetProductByID(ctx context.Context, id int64) (Product, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int64) (User, error)
+	ListOrdersByUserID(ctx context.Context, userID int64) ([]Order, error)
 	ListProducts(ctx context.Context) ([]Product, error)
+	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) (CartItem, error)
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateProductQuantity(ctx context.Context, arg UpdateProductQuantityParams) (Product, error)
 }
 
 var _ Querier = (*Queries)(nil)

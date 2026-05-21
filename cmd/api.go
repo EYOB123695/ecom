@@ -8,7 +8,9 @@ import (
 	_ "github.com/EYOB123695/ecom/docs"
 	repo "github.com/EYOB123695/ecom/internal/adapters/postgresql/sqlc"
 	"github.com/EYOB123695/ecom/internal/auth"
+	"github.com/EYOB123695/ecom/internal/cart"
 	authmw "github.com/EYOB123695/ecom/internal/middleware"
+	"github.com/EYOB123695/ecom/internal/orders"
 	"github.com/EYOB123695/ecom/internal/products"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -36,15 +38,36 @@ func (app *application) mount() http.Handler {
 	productHandler := products.NewHandler(productService)
 	r.Get("/products", productHandler.ListProducts)
 	r.Get("/products/{id}", productHandler.GetProductByID)
+	r.Post("/products", productHandler.CreateProduct)
+	r.Put("/products/{id}", productHandler.UpdateProduct)
+	r.Delete("/products/{id}", productHandler.DeleteProduct)
 
 	authService := auth.NewService(queries, app.config.jwtSecret)
 	authHandler := auth.NewHandler(authService)
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
 
+	cartService := cart.NewService(queries)
+	cartHandler := cart.NewHandler(cartService)
+
+	ordersService := orders.NewService(app.db, queries)
+	ordersHandler := orders.NewHandler(ordersService)
+
 	r.Group(func(r chi.Router) {
 		r.Use(authmw.Auth(app.config.jwtSecret))
 		r.Get("/users/me", authHandler.GetMe)
+
+		// Cart routes
+		r.Get("/cart", cartHandler.GetCart)
+		r.Post("/cart", cartHandler.AddCartItem)
+		r.Put("/cart/{product_id}", cartHandler.UpdateCartItem)
+		r.Delete("/cart/{product_id}", cartHandler.DeleteCartItem)
+		r.Delete("/cart", cartHandler.ClearCart)
+
+		// Orders routes
+		r.Post("/orders", ordersHandler.Checkout)
+		r.Get("/orders", ordersHandler.ListOrders)
+		r.Get("/orders/{id}", ordersHandler.GetOrder)
 	})
 
 	return r

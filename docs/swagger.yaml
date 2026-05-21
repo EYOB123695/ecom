@@ -1,20 +1,20 @@
 basePath: /
 definitions:
-  internal_auth.AuthResponse:
+  auth.AuthResponse:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/internal_auth.UserResponse'
+        $ref: '#/definitions/auth.UserResponse'
     type: object
-  internal_auth.LoginRequest:
+  auth.LoginRequest:
     properties:
       email:
         type: string
       password:
         type: string
     type: object
-  internal_auth.RegisterRequest:
+  auth.RegisterRequest:
     properties:
       email:
         type: string
@@ -23,7 +23,7 @@ definitions:
       password:
         type: string
     type: object
-  internal_auth.UserResponse:
+  auth.UserResponse:
     properties:
       email:
         type: string
@@ -34,7 +34,82 @@ definitions:
       role:
         type: string
     type: object
-  internal_products.ProductResponse:
+  cart.AddCartItemRequest:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  cart.CartItemResponse:
+    properties:
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      product_price:
+        description: price in cents
+        type: integer
+      product_stock:
+        description: remaining stock quantity
+        type: integer
+      quantity:
+        description: quantity in user's cart
+        type: integer
+    type: object
+  cart.CartResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/cart.CartItemResponse'
+        type: array
+      total_cents:
+        type: integer
+    type: object
+  cart.UpdateCartItemRequest:
+    properties:
+      quantity:
+        type: integer
+    type: object
+  orders.OrderItemResponse:
+    properties:
+      price:
+        description: price of item in main currency (e.g. dollars)
+        type: number
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  orders.OrderResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/orders.OrderItemResponse'
+        type: array
+      status:
+        type: string
+      total:
+        type: number
+      user_id:
+        type: integer
+    type: object
+  products.CreateProductRequest:
+    properties:
+      name:
+        type: string
+      price_in_cents:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  products.ProductResponse:
     properties:
       created_at:
         type: string
@@ -45,6 +120,26 @@ definitions:
       price_in_cents:
         type: integer
       quantity:
+        type: integer
+    type: object
+  products.UpdateProductRequest:
+    properties:
+      name:
+        type: string
+      price_in_cents:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  repo.CartItem:
+    properties:
+      id:
+        type: integer
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      user_id:
         type: integer
     type: object
 host: localhost:8080
@@ -77,14 +172,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.LoginRequest'
+          $ref: '#/definitions/auth.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_auth.AuthResponse'
+            $ref: '#/definitions/auth.AuthResponse'
         "400":
           description: Bad Request
           schema:
@@ -110,14 +205,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_auth.RegisterRequest'
+          $ref: '#/definitions/auth.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_auth.AuthResponse'
+            $ref: '#/definitions/auth.AuthResponse'
         "400":
           description: Bad Request
           schema:
@@ -133,6 +228,243 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /cart:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Clear cart
+      tags:
+      - cart
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cart.CartResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get cart
+      tags:
+      - cart
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Add cart item payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/cart.AddCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/repo.CartItem'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Add item to cart
+      tags:
+      - cart
+  /cart/{product_id}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Remove item from cart
+      tags:
+      - cart
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Update quantity payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/cart.UpdateCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repo.CartItem'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Update cart item quantity
+      tags:
+      - cart
+  /orders:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/orders.OrderResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List all user orders
+      tags:
+      - orders
+    post:
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/orders.OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Checkout cart and place order
+      tags:
+      - orders
+  /orders/{id}:
+    get:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/orders.OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Get order details by ID
+      tags:
+      - orders
   /products:
     get:
       produces:
@@ -142,7 +474,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_products.ProductResponse'
+              $ref: '#/definitions/products.ProductResponse'
             type: array
         "500":
           description: Internal Server Error
@@ -151,7 +483,60 @@ paths:
       summary: List all products
       tags:
       - products
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create product payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/products.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/products.ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new product
+      tags:
+      - products
   /products/{id}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete a product
+      tags:
+      - products
     get:
       parameters:
       - description: Product ID
@@ -165,7 +550,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_products.ProductResponse'
+            $ref: '#/definitions/products.ProductResponse'
         "400":
           description: Bad Request
           schema:
@@ -181,6 +566,43 @@ paths:
       summary: Get product by ID
       tags:
       - products
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update product payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/products.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/products.ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update a product
+      tags:
+      - products
   /users/me:
     get:
       produces:
@@ -189,7 +611,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_auth.UserResponse'
+            $ref: '#/definitions/auth.UserResponse'
         "401":
           description: Unauthorized
           schema:
