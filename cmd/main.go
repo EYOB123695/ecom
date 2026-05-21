@@ -21,7 +21,7 @@ func main() {
 	ctx := context.Background()
 
 	cfg := config{
-		addr: ":8080",
+		addr: ":" + env.GetString("PORT", "8080"),
 		db: dbConfig{
 			dsn: env.GetString("DB_DSN", "host=localhost port=5433 user=postgres password=postgres dbname=ecom sslmode=disable"),
 		},
