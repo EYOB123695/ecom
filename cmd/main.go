@@ -17,22 +17,24 @@ func main() {
 	cfg := config{
 		addr: ":8080",
 		db: dbConfig{
-			dsn: env.GetString("DB_DSN", " host = localhost user= postgres password= postgres dbname = ecom sslmode = disable"),
+			dsn: env.GetString("DB_DSN", "host=localhost port=5433 user=postgres password=postgres dbname=ecom sslmode=disable"),
 		},
 	}
-    logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	//Database 
-	conn,err := pgx.Connect(ctx, cfg.db.dsn)
-	if err != nil { 
-		println(err.Error())
+
+	conn, err := pgx.Connect(ctx, cfg.db.dsn)
+	if err != nil {
+		logger.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
-    defer conn.Close(ctx)
+	defer conn.Close(ctx)
 
 	api := application{
 		config: cfg,
+		db:     conn,
 	}
-    logger.Info("Database Connected Sucessfully", "dsn", cfg.db.dsn)
+	logger.Info("database connected successfully")
 
 	
 
